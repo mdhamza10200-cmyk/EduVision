@@ -218,6 +218,44 @@ def get_static_organ_image(organ: str) -> str | None:
 
         "kidney": "kidney.jpg",
         "kidneys": "kidney.jpg",
+            "stomach": "stomach.jpg",
+
+    "small intestine": "intestine.jpg",
+    "large intestine": "intestine.jpg",
+    "intestines": "intestine.jpg",
+
+    "pancreas": "pancreas.jpg",
+
+    "spleen": "spleen.jpg",
+
+    "esophagus": "esophagus.jpg",
+
+    "trachea": "trachea.jpg",
+
+    "gallbladder": "gallbladder.jpg",
+
+    "urinary bladder": "urinary_bladder.jpg",
+    "bladder": "urinary_bladder.jpg",
+
+    "thyroid": "thyroid.jpg",
+    "thyroid gland": "thyroid.jpg",
+
+    "adrenal gland": "adrenal.jpg",
+    "adrenal glands": "adrenal.jpg",
+
+    "skin": "skin.jpg",
+
+    "eye": "eye.jpg",
+    "eyes": "eye.jpg",
+
+    "ear": "ear.jpg",
+    "ears": "ear.jpg",
+
+    "ovary": "ovary.jpg",
+    "ovaries": "ovary.jpg",
+
+    "testis": "testis.jpg",
+    "testes": "testis.jpg",
         # add more as needed...
     }
 
