@@ -1,0 +1,616 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Medical PDF Assistant</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 0; padding: 0; background: #f5f5f5; }
+    header { background: #1f2937; color: #fff; padding: 1rem 2rem; }
+    header h1 { 
+      margin: 0; 
+      font-size: 1.4rem; 
+      text-align: center;
+      width: 100%;
+    }
+    main { padding: 1.5rem 2rem; }
+
+    .upload-box {
+      background: #ffffff;
+      padding: 1rem;
+      border-radius: 12px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+      margin-bottom: 1rem;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .upload-box input[type="file"] { max-width: 260px; }
+    button {
+      cursor: pointer;
+      background: #2563eb;
+      border: none;
+      color: #fff;
+      padding: 0.5rem 0.9rem;
+      border-radius: 999px;
+      font-size: 0.9rem;
+    }
+    button:disabled { background: #9ca3af; cursor: default; }
+
+    .status { font-size: 0.85rem; color: #4b5563; }
+    .session-info { font-size: 0.9rem; margin-top: 0.25rem; color: #111827; }
+
+    .tabs {
+      margin-top: 1rem;
+      display: flex;
+      gap: 0.4rem;
+      flex-wrap: wrap;
+      border-bottom: 1px solid #e5e7eb;
+      padding-bottom: 0.25rem;
+    }
+
+    .tab-button {
+      background: #e5e7eb;
+      color: #111827;
+      border-radius: 999px;
+      padding: 0.4rem 0.9rem;
+      border: none;
+      border-bottom: 2px solid transparent;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      font-size: 0.9rem;
+    }
+    .tab-button span.icon {
+      font-size: 1rem;
+    }
+    .tab-button.active {
+      background: #ffffff;
+      border-bottom: 2px solid #2563eb;
+      font-weight: 600;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+    }
+    .tab-button:hover {
+      background: #d1d5db;
+    }
+
+    .tab-content {
+      background: #ffffff;
+      padding: 1rem;
+      border-radius: 12px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+      margin-top: 0.25rem;
+      min-height: 200px;
+    }
+
+    .tab-pane { display: none; }
+    .tab-pane.active { display: block; }
+
+    pre {
+      white-space: pre-wrap;
+      word-wrap: break-word;
+      background: #f9fafb;
+      padding: 0.75rem;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      border: 1px solid #e5e7eb;
+    }
+
+    select {
+      padding: 0.3rem;
+      border-radius: 4px;
+      border: 1px solid #d1d5db;
+      font-size: 0.9rem;
+    }
+
+    .row { margin-bottom: 0.75rem; }
+    .image-list { font-size: 0.88rem; }
+    .image-item {
+      border-bottom: 1px dashed #e5e7eb;
+      padding: 0.3rem 0.4rem;
+      cursor: pointer;
+      display:flex;
+      gap:8px;
+      align-items:center;
+    }
+    .image-item:hover { background: #f3f4f6; }
+    .image-item strong { display: inline-block; margin-bottom: 0.15rem; }
+    .badge {
+      display: inline-block;
+      padding: 0.1rem 0.4rem;
+      border-radius: 999px;
+      font-size: 0.75rem;
+      margin-left: 0.25rem;
+    }
+    .badge-ok { background: #d1fae5; color: #065f46; }
+    .badge-blocked { background: #fee2e2; color: #991b1b; }
+
+    .images-container {
+      display: flex;
+      gap: 1rem;
+      margin-top: 0.5rem;
+      align-items: flex-start;
+    }
+    .image-list {
+      flex: 1;
+      max-width: 40%;
+      max-height: 400px;
+      overflow-y: auto;
+      border-right: 1px solid #e5e7eb;
+      padding-right: 0.5rem;
+    }
+    .image-preview {
+      flex: 1;
+      padding-left: 0.5rem;
+      min-height: 200px;
+    }
+    .image-preview h4 { margin-top: 0; margin-bottom: 0.5rem; }
+    .preview-image {
+      max-width: 100%;
+      border-radius: 6px;
+      border: 1px solid #e5e7eb;
+      margin-bottom: 0.5rem;
+    }
+    .small-thumb {
+      max-width: 100px;
+      max-height: 80px;
+      border-radius: 4px;
+      border: 1px solid #e5e7eb;
+      margin-top: 0.25rem;
+      object-fit:cover;
+    }
+
+    .bullet-list { padding-left: 1.2rem; margin: 0; }
+    .bullet-list li { margin-bottom: 0.3rem; }
+
+    #referencesList a { color: #2563eb; text-decoration: none; }
+    #referencesList a:hover { text-decoration: underline; }
+
+    /* Loader spinner for Identify & Generate */
+    .loader {
+      display: inline-block;
+      width: 16px;
+      height: 16px;
+      border: 2px solid #e5e7eb;
+      border-top-color: #2563eb;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      margin-left: 6px;
+      vertical-align: middle;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>EDUVISION: AN AI-POWERED PLATFORM FOR VISUALIZING,
+TRANSLATING, AND ENRICHING TEXTBOOK CONTENT</h1>
+  </header>
+  <main>
+    <section class="upload-box">
+      <div>
+        <input type="file" id="pdfFile" accept="application/pdf,image/*" />
+      </div>
+      <div>
+        <button id="uploadBtn">Upload & Process PDF / Image</button>
+      </div>
+      <div class="status" id="statusText">Status: idle</div>
+      <div class="session-info">
+        Session ID: <span id="sessionIdText">—</span><br />
+        Images found : <span id="imageCountText">0</span>
+      </div>
+    </section>
+
+    <div class="tabs">
+      <button class="tab-button active" data-tab="summary">
+        <span class="icon">📝</span><span>Summary</span>
+      </button>
+      <button class="tab-button" data-tab="language">
+        <span class="icon">🌐</span><span>Language</span>
+      </button>
+      <button class="tab-button" data-tab="details">
+        <span class="icon">📖</span><span>Details</span>
+      </button>
+      <button class="tab-button" data-tab="images">
+        <span class="icon">🖼️</span><span>Images</span>
+      </button>
+      <button class="tab-button" data-tab="references">
+        <span class="icon">🔗</span><span>References</span>
+      </button>
+    </div>
+
+    <section class="tab-content">
+      <div id="tab-summary" class="tab-pane active">
+        <h3>Summary</h3>
+        <ul id="summaryList" class="bullet-list">
+          <li>Upload a PDF to see the summary.</li>
+        </ul>
+      </div>
+
+      <div id="tab-language" class="tab-pane">
+        <h3>Summary in Different Languages</h3>
+        <div class="row">
+          <label for="languageSelect">Choose language: </label>
+          <select id="languageSelect">
+            <option value="English">English</option>
+            <option value="Arabic">Arabic</option>
+            <option value="Hindi">Hindi</option>
+            <option value="French">French</option>
+            <option value="Spanish">Spanish</option>
+          </select>
+          <button id="translateBtn">Translate</button>
+        </div>
+        <pre id="translatedContent">No translation yet.</pre>
+      </div>
+
+      <div id="tab-details" class="tab-pane">
+        <h3>Detailed Explanation</h3>
+        <button id="detailsBtn">Load Details</button>
+        <pre id="detailsContent">Click "Load Details" to get a more detailed explanation.</pre>
+      </div>
+
+      <div id="tab-images" class="tab-pane">
+        <h3>Images & Detailed Organ Diagrams</h3>
+        <div class="row">
+          <button id="loadImagesBtn">Load Extracted Images Info</button>
+          <button id="labelImagesBtn">Identify & Generate Detailed Images</button>
+          <span id="labelImagesLoading" class="loader" style="display:none;"></span>
+        </div>
+        <div class="images-container">
+          <div class="image-list" id="imagesList">No images loaded yet.</div>
+          <div class="image-preview" id="imagePreview">
+            <h4>Preview</h4>
+            <p>Select an image from the list to preview it here.</p>
+          </div>
+        </div>
+      </div>
+
+      <div id="tab-references" class="tab-pane">
+        <h3>References</h3>
+        <button id="referencesBtn">Load References</button>
+        <ul id="referencesList" class="bullet-list">
+          <li>No references loaded yet.</li>
+        </ul>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const API_BASE = "http://127.0.0.1:8000";
+
+    let currentSessionId = null;
+    let lastSummary = "";
+    let imagesLoaded = false;
+    let selectedImageIndex = null;
+
+    const pdfFileInput = document.getElementById("pdfFile");
+    const uploadBtn = document.getElementById("uploadBtn");
+    const statusText = document.getElementById("statusText");
+    const sessionIdText = document.getElementById("sessionIdText");
+    const imageCountText = document.getElementById("imageCountText");
+
+    const summaryList = document.getElementById("summaryList");
+    const languageSelect = document.getElementById("languageSelect");
+    const translateBtn = document.getElementById("translateBtn");
+    const translatedContent = document.getElementById("translatedContent");
+
+    const detailsBtn = document.getElementById("detailsBtn");
+    const detailsContent = document.getElementById("detailsContent");
+
+    const loadImagesBtn = document.getElementById("loadImagesBtn");
+    const labelImagesBtn = document.getElementById("labelImagesBtn");
+    const labelImagesLoading = document.getElementById("labelImagesLoading");
+    const imagesList = document.getElementById("imagesList");
+    const imagePreview = document.getElementById("imagePreview");
+
+    const referencesBtn = document.getElementById("referencesBtn");
+    const referencesList = document.getElementById("referencesList");
+
+    function setStatus(msg) { statusText.textContent = "Status: " + msg; }
+
+    function resolveImageUrl(path) {
+      if (!path) return "";
+      if (path.startsWith("http://") || path.startsWith("https://")) return path;
+      if (/^[A-Za-z]:\\/.test(path)) return "file:///" + path.replace(/\\/g, "/");
+      return API_BASE + path;
+    }
+
+    // Summary markdown → HTML (simple)
+    function renderSummaryBullets(markdown) {
+      if (!markdown) {
+        summaryList.innerHTML = "<p>No summary returned.</p>";
+        return;
+      }
+
+      let html = markdown
+        // Headings like Blood Circulation / Human Brain
+        .replace(/^(Blood Circulation|Human Brain.*)$/gm, "<h2><b>$1</b></h2>")
+        // **bold**
+        .replace(/\*\*(.*?)\*\*/g, "<b>$1</b>")
+        // Remove "- " bullets
+        .replace(/^- /gm, "")
+        // Wrap remaining non-heading lines as <p>
+        .replace(/^(?!<h2>)(.+)$/gm, "<p>$1</p>");
+
+      summaryList.innerHTML = html;
+    }
+
+    function renderReferencesList(refs) {
+      referencesList.innerHTML = "";
+      if (!refs || refs.length === 0) {
+        referencesList.innerHTML = "<li>No references returned.</li>";
+        return;
+      }
+      refs.forEach(ref => {
+        const li = document.createElement("li");
+        const urlMatch = ref.match(/https?:\/\/\S+/);
+        const url = urlMatch ? urlMatch[0].replace(/[)\]]+$/, "") : null;
+        const textWithoutNumber = ref.replace(/^\d+[\).\s-]*/, "").trim();
+        if (url) {
+          const a = document.createElement("a");
+          a.href = url; a.target = "_blank"; a.rel = "noopener noreferrer";
+          a.textContent = textWithoutNumber || url;
+          li.appendChild(a);
+        } else {
+          li.textContent = ref;
+        }
+        referencesList.appendChild(li);
+      });
+    }
+
+    // Tabs
+    document.querySelectorAll(".tab-button").forEach(btn => {
+      btn.addEventListener("click", () => {
+        document.querySelectorAll(".tab-button").forEach(b => b.classList.remove("active"));
+        document.querySelectorAll(".tab-pane").forEach(p => p.classList.remove("active"));
+        btn.classList.add("active");
+        const tab = btn.dataset.tab;
+        document.getElementById("tab-" + tab).classList.add("active");
+        if (tab === "images" && currentSessionId && !imagesLoaded) {
+          imagesList.textContent = "Loading images...";
+          loadImages(false);
+        }
+      });
+    });
+
+    // Upload
+    uploadBtn.addEventListener("click", async () => {
+      if (!pdfFileInput.files[0]) { alert("Please select a PDF or image file first."); return; }
+      setStatus("Uploading file...");
+      uploadBtn.disabled = true;
+      imagesLoaded = false;
+      imagesList.textContent = "No images loaded yet.";
+      imagePreview.innerHTML = "<h4>Preview</h4><p>Select an image from the list to preview it here.</p>";
+
+      try {
+        const formData = new FormData();
+        formData.append("file", pdfFileInput.files[0]);
+
+        const res = await fetch(`${API_BASE}/upload`, { method: "POST", body: formData });
+
+        if (!res.ok) throw new Error("Upload failed: " + res.status);
+        const data = await res.json();
+        console.log("Upload response:", data);
+
+        currentSessionId = data.session_id;
+        sessionIdText.textContent = currentSessionId;
+        imageCountText.textContent = data.image_count ?? 0;
+
+        lastSummary = data.summary || "";
+        renderSummaryBullets(lastSummary);
+
+        setStatus("Upload and processing complete.");
+      } catch (err) {
+        console.error(err);
+        setStatus("Error during upload.");
+        alert("Error: " + err.message);
+      } finally {
+        uploadBtn.disabled = false;
+      }
+    });
+
+    // Translate
+    translateBtn.addEventListener("click", async () => {
+      if (!currentSessionId) { alert("Upload a PDF first."); return; }
+      const lang = languageSelect.value;
+      setStatus(`Translating summary to ${lang}...`);
+      translateBtn.disabled = true;
+      translatedContent.textContent = "Loading translation...";
+      try {
+        const res = await fetch(`${API_BASE}/translate/${currentSessionId}?language=${encodeURIComponent(lang)}`);
+        if (!res.ok) throw new Error("Translate failed: " + res.status);
+        const data = await res.json();
+        translatedContent.textContent = data.summary || "No translated summary.";
+        setStatus("Translation complete.");
+      } catch (err) {
+        console.error(err);
+        setStatus("Error during translation.");
+        alert("Error: " + err.message);
+      } finally {
+        translateBtn.disabled = false;
+      }
+    });
+
+    // Details
+    detailsBtn.addEventListener("click", async () => {
+      if (!currentSessionId) { alert("Upload a PDF first."); return; }
+      setStatus("Loading details...");
+      detailsBtn.disabled = true;
+      detailsContent.textContent = "Loading detailed explanation...";
+      try {
+        const res = await fetch(`${API_BASE}/details/${currentSessionId}`);
+        if (!res.ok) throw new Error("Details failed: " + res.status);
+        const data = await res.json();
+        detailsContent.textContent = data.details || "No details returned.";
+        setStatus("Details loaded.");
+      } catch (err) {
+        console.error(err);
+        setStatus("Error loading details.");
+        alert("Error: " + err.message);
+      } finally {
+        detailsBtn.disabled = false;
+      }
+    });
+
+    // Load images (raw extracted)
+    async function loadImages(updateGlobalStatus = true) {
+      if (!currentSessionId) { alert("Upload a PDF first."); return; }
+      if (updateGlobalStatus) setStatus("Loading images info...");
+      loadImagesBtn.disabled = true;
+      imagesList.textContent = "Loading images...";
+      imagePreview.innerHTML = "<h4>Preview</h4><p>Waiting for images...</p>";
+
+      try {
+        const res = await fetch(`${API_BASE}/images/${currentSessionId}`);
+        if (!res.ok) throw new Error("Images fetch failed: " + res.status);
+        const data = await res.json();
+        const originalImages = data.images || [];
+        renderImagesList(originalImages, []);
+        imagesLoaded = true;
+        if (updateGlobalStatus) setStatus("Images info loaded.");
+      } catch (err) {
+        console.error(err);
+        if (updateGlobalStatus) setStatus("Error loading images info.");
+        alert("Error: " + err.message);
+      } finally {
+        loadImagesBtn.disabled = false;
+      }
+    }
+
+    loadImagesBtn.addEventListener("click", () => loadImages(true));
+
+    // Bulk label images WITH loader
+    labelImagesBtn.addEventListener("click", async () => {
+      if (!currentSessionId) { alert("Upload a PDF first."); return; }
+      setStatus("Identifying organs and generating detailed diagrams for all images...");
+      labelImagesBtn.disabled = true;
+      labelImagesLoading.style.display = "inline-block";
+      try {
+        const res = await fetch(`${API_BASE}/images/label/${currentSessionId}`, { method: "POST" });
+        if (!res.ok) throw new Error("Label images failed: " + res.status);
+        const data = await res.json();
+        renderImagesList([], data.results || []);
+        imagesLoaded = true;
+        setStatus("Image labeling and diagrams loaded.");
+      } catch (err) {
+        console.error(err);
+        setStatus("Error labeling images.");
+        alert("Error: " + err.message);
+      } finally {
+        labelImagesBtn.disabled = false;
+        labelImagesLoading.style.display = "none";
+      }
+    });
+
+    // Render image list + preview
+    function renderImagesList(originalImages = [], labeledResults = []) {
+      const items = [];
+
+      if (labeledResults && labeledResults.length > 0) {
+        labeledResults.forEach((item, index) => {
+          const status = item.image_generation_status || (item.labeled_image_url ? "ok" : "not_found");
+          const badgeClass = status === "ok" ? "badge-ok" : "badge-blocked";
+          const labelList = (item.labels || []).join(", ");
+          const originalResolved = item.original ? resolveImageUrl(item.original) : "";
+          const labeledResolved = item.labeled_image_url ? resolveImageUrl(item.labeled_image_url) : "";
+
+          items.push(`
+            <div class="image-item" data-index="${index}"
+                 data-original-url="${originalResolved}"
+                 data-labeled-url="${labeledResolved}"
+                 data-organ="${(item.organ || "").replace(/"/g, '&quot;')}"
+                 data-labels="${labelList.replace(/"/g, '&quot;')}">
+              <div style="flex:1">
+                <strong>Image #${index + 1}</strong>
+                <span class="badge ${badgeClass}">${status}</span><br>
+                Organ: ${item.organ || "unknown"}
+              </div>
+              ${originalResolved ? `<img src="${originalResolved}" class="small-thumb" />` : ""}
+            </div>
+          `);
+        });
+      } else {
+        originalImages.forEach((imgPath, index) => {
+          const resolved = resolveImageUrl(imgPath);
+          items.push(`
+            <div class="image-item" data-index="${index}"
+                 data-original-url="${resolved}"
+                 data-labeled-url=""
+                 data-organ=""
+                 data-labels="">
+              <div style="flex:1"><strong>Image #${index + 1}</strong></div>
+              <img src="${resolved}" class="small-thumb" />
+            </div>
+          `);
+        });
+      }
+
+      imagesList.innerHTML = items.join("");
+      const imageItems = imagesList.querySelectorAll(".image-item");
+
+      imageItems.forEach((el) => {
+        el.addEventListener("click", () => {
+          const originalUrl = el.getAttribute("data-original-url");
+          const labeledUrl = el.getAttribute("data-labeled-url");
+          const organ = el.getAttribute("data-organ") || "unknown";
+          const labels = el.getAttribute("data-labels") || "";
+
+          let html = `<h4>Preview</h4>`;
+
+          html += `<p><strong>Organ:</strong> ${organ}</p>`;
+          if (labels) {
+            html += `<p><strong>Labels:</strong> ${labels}</p>`;
+          }
+
+          if (labeledUrl) {
+            html += `
+              <div>
+                <p><strong>Detailed Organ Image</strong></p>
+                <img src="${resolveImageUrl(labeledUrl)}" class="preview-image" />
+              </div>
+            `;
+          } else {
+            html += `
+              <div>
+                <p><strong>Original image</strong></p>
+                <img src="${originalUrl}" class="preview-image" />
+              </div>
+            `;
+          }
+
+          imagePreview.innerHTML = html;
+          setStatus("Preview updated.");
+        });
+      });
+
+      if (imageItems.length > 0) {
+        imageItems[0].click();
+      }
+    }
+
+    // References
+    referencesBtn.addEventListener("click", async () => {
+      if (!currentSessionId) { alert("Upload a PDF first."); return; }
+      setStatus("Loading references...");
+      referencesBtn.disabled = true;
+      referencesList.innerHTML = "<li>Loading references...</li>";
+      try {
+        const res = await fetch(`${API_BASE}/references/${currentSessionId}`);
+        if (!res.ok) throw new Error("References failed: " + res.status);
+        const data = await res.json();
+        renderReferencesList(data.references || []);
+        setStatus("References loaded.");
+      } catch (err) {
+        console.error(err);
+        setStatus("Error loading references.");
+        alert("Error: " + err.message);
+      } finally {
+        referencesBtn.disabled = false;
+      }
+    });
+  </script>
+</body>
+</html>
