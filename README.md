@@ -26,10 +26,8 @@ educational content from uploaded PDFs.
 <img width="1186" height="956" alt="image" src="https://github.com/user-attachments/assets/26bbd154-27af-4473-a663-40aa9f35cb2b" />
 
 ## How to Run
-running
----------
-.\.venv\Scripts\activate
-uvicorn app.main:app --reload
+1. .\.venv\Scripts\activate
+2. uvicorn app.main:app --reload
 
 ## Future Improvements
 - Voice support
