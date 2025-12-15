@@ -135,6 +135,25 @@ async def get_details(session_id: str):
     return {"details": data["details"]}
 
 
+@app.get("/details/translate/{session_id}")
+async def translate_details(session_id: str, language: str):
+    data = SESSION_DATA.get(session_id)
+    if not data:
+        return JSONResponse(status_code=404, content={"error": "Invalid session_id"})
+
+    # Ensure details exist
+    if not data["details"]:
+        data["details"] = generate_detailed_text(data["summary"], data["text"])
+
+    # Reuse existing translate_summary logic
+    translated_details = translate_summary(data["details"], language)
+
+    return {
+        "language": language,
+        "details": translated_details
+    }
+
+
 @app.get("/references/{session_id}")
 async def get_refs(session_id: str):
     data = SESSION_DATA.get(session_id)

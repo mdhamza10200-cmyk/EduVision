@@ -1,24 +1,39 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
   <title>Medical PDF Assistant</title>
   <style>
-    body { font-family: Arial, sans-serif; margin: 0; padding: 0; background: #f5f5f5; }
-    header { background: #1f2937; color: #fff; padding: 1rem 2rem; }
-    header h1 { 
-      margin: 0; 
-      font-size: 1.4rem; 
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background: #f5f5f5;
+    }
+
+    header {
+      background: #1f2937;
+      color: #fff;
+      padding: 1rem 2rem;
+    }
+
+    header h1 {
+      margin: 0;
+      font-size: 1.4rem;
       text-align: center;
       width: 100%;
     }
-    main { padding: 1.5rem 2rem; }
+
+    main {
+      padding: 1.5rem 2rem;
+    }
 
     .upload-box {
       background: #ffffff;
       padding: 1rem;
       border-radius: 12px;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
       margin-bottom: 1rem;
       display: flex;
       flex-wrap: wrap;
@@ -26,7 +41,10 @@
       gap: 0.75rem;
     }
 
-    .upload-box input[type="file"] { max-width: 260px; }
+    .upload-box input[type="file"] {
+      max-width: 260px;
+    }
+
     button {
       cursor: pointer;
       background: #2563eb;
@@ -36,10 +54,22 @@
       border-radius: 999px;
       font-size: 0.9rem;
     }
-    button:disabled { background: #9ca3af; cursor: default; }
 
-    .status { font-size: 0.85rem; color: #4b5563; }
-    .session-info { font-size: 0.9rem; margin-top: 0.25rem; color: #111827; }
+    button:disabled {
+      background: #9ca3af;
+      cursor: default;
+    }
+
+    .status {
+      font-size: 0.85rem;
+      color: #4b5563;
+    }
+
+    .session-info {
+      font-size: 0.9rem;
+      margin-top: 0.25rem;
+      color: #111827;
+    }
 
     .tabs {
       margin-top: 1rem;
@@ -62,15 +92,18 @@
       gap: 0.35rem;
       font-size: 0.9rem;
     }
+
     .tab-button span.icon {
       font-size: 1rem;
     }
+
     .tab-button.active {
       background: #ffffff;
       border-bottom: 2px solid #2563eb;
       font-weight: 600;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
     }
+
     .tab-button:hover {
       background: #d1d5db;
     }
@@ -79,13 +112,18 @@
       background: #ffffff;
       padding: 1rem;
       border-radius: 12px;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
       margin-top: 0.25rem;
       min-height: 200px;
     }
 
-    .tab-pane { display: none; }
-    .tab-pane.active { display: block; }
+    .tab-pane {
+      display: none;
+    }
+
+    .tab-pane.active {
+      display: block;
+    }
 
     pre {
       white-space: pre-wrap;
@@ -104,18 +142,32 @@
       font-size: 0.9rem;
     }
 
-    .row { margin-bottom: 0.75rem; }
-    .image-list { font-size: 0.88rem; }
+    .row {
+      margin-bottom: 0.75rem;
+    }
+
+    .image-list {
+      font-size: 0.88rem;
+    }
+
     .image-item {
       border-bottom: 1px dashed #e5e7eb;
       padding: 0.3rem 0.4rem;
       cursor: pointer;
-      display:flex;
-      gap:8px;
-      align-items:center;
+      display: flex;
+      gap: 8px;
+      align-items: center;
     }
-    .image-item:hover { background: #f3f4f6; }
-    .image-item strong { display: inline-block; margin-bottom: 0.15rem; }
+
+    .image-item:hover {
+      background: #f3f4f6;
+    }
+
+    .image-item strong {
+      display: inline-block;
+      margin-bottom: 0.15rem;
+    }
+
     .badge {
       display: inline-block;
       padding: 0.1rem 0.4rem;
@@ -123,8 +175,16 @@
       font-size: 0.75rem;
       margin-left: 0.25rem;
     }
-    .badge-ok { background: #d1fae5; color: #065f46; }
-    .badge-blocked { background: #fee2e2; color: #991b1b; }
+
+    .badge-ok {
+      background: #d1fae5;
+      color: #065f46;
+    }
+
+    .badge-blocked {
+      background: #fee2e2;
+      color: #991b1b;
+    }
 
     .images-container {
       display: flex;
@@ -132,6 +192,7 @@
       margin-top: 0.5rem;
       align-items: flex-start;
     }
+
     .image-list {
       flex: 1;
       max-width: 40%;
@@ -140,32 +201,51 @@
       border-right: 1px solid #e5e7eb;
       padding-right: 0.5rem;
     }
+
     .image-preview {
       flex: 1;
       padding-left: 0.5rem;
       min-height: 200px;
     }
-    .image-preview h4 { margin-top: 0; margin-bottom: 0.5rem; }
+
+    .image-preview h4 {
+      margin-top: 0;
+      margin-bottom: 0.5rem;
+    }
+
     .preview-image {
       max-width: 100%;
       border-radius: 6px;
       border: 1px solid #e5e7eb;
       margin-bottom: 0.5rem;
     }
+
     .small-thumb {
       max-width: 100px;
       max-height: 80px;
       border-radius: 4px;
       border: 1px solid #e5e7eb;
       margin-top: 0.25rem;
-      object-fit:cover;
+      object-fit: cover;
     }
 
-    .bullet-list { padding-left: 1.2rem; margin: 0; }
-    .bullet-list li { margin-bottom: 0.3rem; }
+    .bullet-list {
+      padding-left: 1.2rem;
+      margin: 0;
+    }
 
-    #referencesList a { color: #2563eb; text-decoration: none; }
-    #referencesList a:hover { text-decoration: underline; }
+    .bullet-list li {
+      margin-bottom: 0.3rem;
+    }
+
+    #referencesList a {
+      color: #2563eb;
+      text-decoration: none;
+    }
+
+    #referencesList a:hover {
+      text-decoration: underline;
+    }
 
     /* Loader spinner for Identify & Generate */
     .loader {
@@ -179,15 +259,34 @@
       margin-left: 6px;
       vertical-align: middle;
     }
+
     @keyframes spin {
-      to { transform: rotate(360deg); }
+      to {
+        transform: rotate(360deg);
+      }
     }
+
+    .details-box {
+  white-space: normal;     /* 🔴 critical */
+  line-height: 1.6;
+  font-size: 0.95rem;
+}
+
+.details-box ul {
+  margin-left: 1.2rem;
+}
+
+.details-box li {
+  margin-bottom: 0.4rem;
+}
+
   </style>
 </head>
+
 <body>
   <header>
     <h1>EDUVISION: AN AI-POWERED PLATFORM FOR VISUALIZING,
-TRANSLATING, AND ENRICHING TEXTBOOK CONTENT</h1>
+      TRANSLATING, AND ENRICHING TEXTBOOK CONTENT</h1>
   </header>
   <main>
     <section class="upload-box">
@@ -248,9 +347,26 @@ TRANSLATING, AND ENRICHING TEXTBOOK CONTENT</h1>
 
       <div id="tab-details" class="tab-pane">
         <h3>Detailed Explanation</h3>
-        <button id="detailsBtn">Load Details</button>
-        <pre id="detailsContent">Click "Load Details" to get a more detailed explanation.</pre>
+
+        <div class="row">
+          <button id="detailsBtn">Load Details</button>
+
+          <select id="detailsLanguage">
+            <option value="English">English</option>
+            <option value="Arabic">Arabic</option>
+            <option value="Hindi">Hindi</option>
+            <option value="French">French</option>
+            <option value="Spanish">Spanish</option>
+          </select>
+
+          <button id="translateDetailsBtn">Translate</button>
+        </div>
+
+        <div id="detailsContent" class="details-box">
+          Click "Load Details" to get a more detailed explanation.
+        </div>
       </div>
+
 
       <div id="tab-images" class="tab-pane">
         <h3>Images & Detailed Organ Diagrams</h3>
@@ -299,6 +415,9 @@ TRANSLATING, AND ENRICHING TEXTBOOK CONTENT</h1>
 
     const detailsBtn = document.getElementById("detailsBtn");
     const detailsContent = document.getElementById("detailsContent");
+    const detailsLanguageSelect = document.getElementById("detailsLanguage");
+const translateDetailsBtn = document.getElementById("translateDetailsBtn");
+
 
     const loadImagesBtn = document.getElementById("loadImagesBtn");
     const labelImagesBtn = document.getElementById("labelImagesBtn");
@@ -337,6 +456,20 @@ TRANSLATING, AND ENRICHING TEXTBOOK CONTENT</h1>
 
       summaryList.innerHTML = html;
     }
+
+    function renderMarkdown(md) {
+  if (!md) return "<p>No content.</p>";
+
+  return md
+    .replace(/^### (.*)$/gm, "<h3>$1</h3>")
+    .replace(/^## (.*)$/gm, "<h2>$1</h2>")
+    .replace(/^# (.*)$/gm, "<h1>$1</h1>")
+    .replace(/\*\*(.*?)\*\*/g, "<b>$1</b>")
+    .replace(/^- (.*)$/gm, "<li>$1</li>")
+    .replace(/(<li>.*<\/li>)/gs, "<ul>$1</ul>")
+    .replace(/\n\n+/g, "<br><br>");
+}
+
 
     function renderReferencesList(refs) {
       referencesList.innerHTML = "";
@@ -444,7 +577,7 @@ TRANSLATING, AND ENRICHING TEXTBOOK CONTENT</h1>
         const res = await fetch(`${API_BASE}/details/${currentSessionId}`);
         if (!res.ok) throw new Error("Details failed: " + res.status);
         const data = await res.json();
-        detailsContent.textContent = data.details || "No details returned.";
+        detailsContent.innerHTML = renderMarkdown(data.details)|| "No details returned.";
         setStatus("Details loaded.");
       } catch (err) {
         console.error(err);
@@ -454,6 +587,38 @@ TRANSLATING, AND ENRICHING TEXTBOOK CONTENT</h1>
         detailsBtn.disabled = false;
       }
     });
+
+    
+    // Translate Details
+translateDetailsBtn.addEventListener("click", async () => {
+  if (!currentSessionId) {
+    alert("Upload a PDF first.");
+    return;
+  }
+
+  const language = detailsLanguageSelect.value;
+  setStatus(`Translating details to ${language}...`);
+
+  try {
+    const res = await fetch(
+      `${API_BASE}/details/translate/${currentSessionId}?language=${encodeURIComponent(language)}`
+    );
+
+    if (!res.ok) throw new Error("Details translation failed");
+
+    const data = await res.json();
+
+    detailsContent.innerHTML = renderMarkdown(data.details);
+    setStatus("Details translated.");
+  } catch (err) {
+    console.error(err);
+    alert("Translation error: " + err.message);
+  }
+});
+
+     
+
+
 
     // Load images (raw extracted)
     async function loadImages(updateGlobalStatus = true) {
@@ -613,4 +778,5 @@ TRANSLATING, AND ENRICHING TEXTBOOK CONTENT</h1>
     });
   </script>
 </body>
+
 </html>

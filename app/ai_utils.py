@@ -54,11 +54,11 @@ def summarize_text(text: str) -> str:
 # -------------------------------------------------------------------
 # 2) Translate summary to another language
 # -------------------------------------------------------------------
-def translate_summary(summary: str, language: str) -> str:
+def translate_text(text: str, language: str, context: str = "medical text") -> str:
     prompt = (
-        f"Translate the medical summary below into {language}. "
-        "Keep medical terms accurate and use a professional tone.\n\n"
-        f"{summary}"
+        f"Translate the following {context} into {language}. "
+        "Keep medical terminology accurate and use a professional tone.\n\n"
+        f"{text}"
     )
     try:
         resp = client.chat.completions.create(
@@ -67,11 +67,16 @@ def translate_summary(summary: str, language: str) -> str:
         )
         return resp.choices[0].message.content.strip()
     except APIConnectionError as e:
-        print("Azure OpenAI connection error in translate_summary:", e)
+        print("Azure OpenAI connection error in translate_text:", e)
         return f"Error: unable to contact Azure OpenAI for translation to {language}."
     except Exception as e:
-        print("Unexpected error in translate_summary:", e)
+        print("Unexpected error in translate_text:", e)
         return "Error: translation failed."
+
+def translate_summary(summary: str, language: str) -> str:
+    return translate_text(summary, language, context="medical summary")
+
+
 
 
 # -------------------------------------------------------------------
@@ -100,6 +105,21 @@ def generate_detailed_text(summary: str, full_text: str) -> str:
     except Exception as e:
         print("Unexpected error in generate_detailed_text:", e)
         return "Error: details generation failed."
+
+def generate_detailed_text_translated(
+    summary: str,
+    full_text: str,
+    language: str
+) -> str:
+    # Step 1: generate English details
+    details = generate_detailed_text(summary, full_text)
+
+    # If generation failed, don’t translate garbage
+    if details.startswith("Error:"):
+        return details
+
+    # Step 2: translate details
+    return translate_text(details, language, context="detailed medical explanation")
 
 
 # -------------------------------------------------------------------
