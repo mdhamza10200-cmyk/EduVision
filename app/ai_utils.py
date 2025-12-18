@@ -31,11 +31,20 @@ def summarize_text(text: str) -> str:
         text = text[:12000]
 
     prompt = (
-        "You are a medical assistant for doctors. "
-        "Summarize the following medical/anatomy content as bullet points. "
-        "Focus on: key anatomical structures, function, and clinical notes.\n\n"
-        f"{text}"
-    )
+    "You are a medical assistant for doctors.\n\n"
+    "TASK:\n"
+    "- Summarize the following content ONLY if it is about HUMAN anatomy.\n"
+    "- If the content is about ANIMALS or VETERINARY topics, respond exactly with:\n"
+    "  \"Animal content detected. Summary not generated.\"\n\n"
+    "FORMAT:\n"
+    "- Bullet points\n"
+    "- Key anatomical structures\n"
+    "- Function\n"
+    "- Clinical notes\n\n"
+    "CONTENT:\n"
+    f"{text}"
+)
+
 
     try:
         resp = client.chat.completions.create(
@@ -72,6 +81,35 @@ def translate_text(text: str, language: str, context: str = "medical text") -> s
     except Exception as e:
         print("Unexpected error in translate_text:", e)
         return "Error: translation failed."
+    
+def translate_references(references: list[str], language: str) -> list[str]:
+    """
+    Translate reference titles/descriptions while keeping URLs unchanged.
+    """
+    translated = []
+
+    for ref in references:
+        # If line contains a URL, translate only the text part
+        parts = ref.split("http")
+        text_part = parts[0].strip()
+
+        if text_part:
+            translated_text = translate_text(
+                text_part,
+                language,
+                context="medical reference text"
+            )
+        else:
+            translated_text = ""
+
+        # Re-attach URL if present
+        if len(parts) > 1:
+            translated.append(f"{translated_text} http{parts[1]}")
+        else:
+            translated.append(translated_text)
+
+    return translated
+
 
 def translate_summary(summary: str, language: str) -> str:
     return translate_text(summary, language, context="medical summary")
@@ -88,6 +126,9 @@ def generate_detailed_text(summary: str, full_text: str) -> str:
 
     prompt = (
         "You are an expert medical educator. Using the PDF content and its summary, "
+        "- Generate the following content ONLY if it is about HUMAN anatomy.\n"
+        "- If the content is about ANIMALS or VETERINARY topics, respond exactly with:\n"
+        "  \"Animal content detected. Details not generated.\"\n\n"
         "write a detailed explanation for doctors (around 1000 words). "
         "Include sections: Anatomy, Physiology, Common Pathologies, Diagnostics, "
         "and Clinical Notes.\n\n"
@@ -130,7 +171,7 @@ def generate_references(summary: str) -> List[str]:
         "Based on the following summary of a human organ/body part, "
         "list 5 to 8 reputable reference links (guidelines, textbooks, "
         "or review articles). Prefer major medical sites and journals. "
-        "Return them as a simple numbered list with plain URLs.\n\n"
+        "Return them as a simple numbered list with plain URLs along with headings.\n\n"
         f"{summary}"
     )
     try:
@@ -146,6 +187,31 @@ def generate_references(summary: str) -> List[str]:
     except Exception as e:
         print("Unexpected error in generate_references:", e)
         return ["Error: reference generation failed."]
+    
+
+def translate_references(refs: list[str], language: str) -> list[str]:
+    if not refs:
+        return []
+
+    text = "\n".join(refs)
+
+    prompt = (
+        f"Translate the following medical reference titles and headings into {language}. "
+        "Do NOT translate URLs. Keep URLs exactly the same.\n\n"
+        f"{text}"
+    )
+
+    try:
+        resp = client.chat.completions.create(
+            model=AZURE_OPENAI_CHAT_DEPLOYMENT,
+            messages=[{"role": "user", "content": prompt}],
+        )
+        translated = resp.choices[0].message.content.strip()
+        return [line for line in translated.splitlines() if line.strip()]
+    except Exception as e:
+        print("Error translating references:", e)
+        return ["Error: reference translation failed."]
+
 
 
 # -------------------------------------------------------------------
@@ -168,6 +234,9 @@ def identify_organ(image_path: str) -> Dict:
                     "text": (
                         "This is a medical image from a PDF. "
                         "Identify the main human organ or body part. "
+                        "- Generate the following content ONLY if it is about HUMAN anatomy.\n"
+                        "- If the content is about ANIMALS or VETERINARY topics, respond exactly with:\n"
+                        "  \"Animal content detected. Images not identified.\"\n\n"
                         "Also list key anatomical structures visible (max 10). "
                         "Respond only in JSON with keys 'organ' and 'labels'."
                     ),
@@ -276,6 +345,79 @@ def get_static_organ_image(organ: str) -> str | None:
 
     "testis": "testis.jpg",
     "testes": "testis.jpg",
+
+            # Digestive tract (remaining)
+        "duodenum": "intestine.jpg",
+        "jejunum": "intestine.jpg",
+        "ileum": "intestine.jpg",
+        "cecum": "intestine.jpg",
+        "colon": "intestine.jpg",
+        "rectum": "intestine.jpg",
+        "anus": "intestine.jpg",
+        "appendix": "intestine.jpg",
+
+        # Respiratory system
+        "pharynx": "pharynx.jpg",
+        "larynx": "larynx.jpg",
+        "bronchus": "lungs.jpg",
+        "bronchi": "lungs.jpg",
+        "alveoli": "lungs.jpg",
+        "diaphragm": "diaphragm.jpg",
+
+        # Nervous system
+        "spinal cord": "spinal_cord.jpg",
+        "cerebellum": "brain.jpg",
+        "brainstem": "brain.jpg",
+        "hypothalamus": "brain.jpg",
+        "pituitary gland": "pituitary.jpg",
+        "pineal gland": "pineal.jpg",
+        "peripheral nerves": "nervous_system.jpg",
+        "nervous system": "nervous_system.jpg",
+
+        # Urinary system
+        "ureter": "urinary_system.jpg",
+        "ureters": "urinary_system.jpg",
+        "urethra": "urinary_system.jpg",
+
+        # Male reproductive system
+        "epididymis": "testis.jpg",
+        "vas deferens": "testis.jpg",
+        "prostate": "prostate.jpg",
+        "seminal vesicle": "prostate.jpg",
+        "penis": "male_reproductive.jpg",
+
+        # Female reproductive system
+        "uterus": "uterus.jpg",
+        "fallopian tube": "uterus.jpg",
+        "fallopian tubes": "uterus.jpg",
+        "cervix": "uterus.jpg",
+        "vagina": "uterus.jpg",
+
+        # Sensory organs
+        "retina": "eye.jpg",
+        "optic nerve": "eye.jpg",
+        "cochlea": "ear.jpg",
+        "vestibular system": "ear.jpg",
+
+        # Endocrine system
+        "parathyroid gland": "thyroid.jpg",
+        "parathyroid glands": "thyroid.jpg",
+
+        # Lymphatic / immune system
+        "lymph node": "lymphatic.jpg",
+        "lymph nodes": "lymphatic.jpg",
+        "bone marrow": "bone.jpg",
+        "thymus": "thymus.jpg",
+
+        # Musculoskeletal
+        "bone": "bone.jpg",
+        "bones": "bone.jpg",
+        "muscle": "muscle.jpg",
+        "muscles": "muscle.jpg",
+        "joint": "joint.jpg",
+        "joints": "joint.jpg",
+        "knee": "joint.jpg"
+
         # add more as needed...
     }
 

@@ -386,7 +386,20 @@
 
       <div id="tab-references" class="tab-pane">
         <h3>References</h3>
-        <button id="referencesBtn">Load References</button>
+        <div class="row">
+  <button id="referencesBtn">Load References</button>
+
+  <select id="referencesLanguage">
+    <option value="English">English</option>
+    <option value="Arabic">Arabic</option>
+    <option value="Hindi">Hindi</option>
+    <option value="French">French</option>
+    <option value="Spanish">Spanish</option>
+  </select>
+
+  <button id="translateReferencesBtn">Translate</button>
+</div>
+
         <ul id="referencesList" class="bullet-list">
           <li>No references loaded yet.</li>
         </ul>
@@ -427,6 +440,9 @@ const translateDetailsBtn = document.getElementById("translateDetailsBtn");
 
     const referencesBtn = document.getElementById("referencesBtn");
     const referencesList = document.getElementById("referencesList");
+    const referencesLanguageSelect = document.getElementById("referencesLanguage");
+    const translateReferencesBtn = document.getElementById("translateReferencesBtn");
+
 
     function setStatus(msg) { statusText.textContent = "Status: " + msg; }
 
@@ -776,6 +792,33 @@ translateDetailsBtn.addEventListener("click", async () => {
         referencesBtn.disabled = false;
       }
     });
+  
+    translateReferencesBtn.addEventListener("click", async () => {
+  if (!currentSessionId) {
+    alert("Upload a PDF first.");
+    return;
+  }
+
+  const language = referencesLanguageSelect.value;
+  setStatus(`Translating references to ${language}...`);
+
+  try {
+    const res = await fetch(
+      `${API_BASE}/references/translate/${currentSessionId}?language=${encodeURIComponent(language)}`
+    );
+
+    if (!res.ok) throw new Error("Reference translation failed");
+
+    const data = await res.json();
+    renderReferencesList(data.references || []);
+    setStatus("References translated.");
+  } catch (err) {
+    console.error(err);
+    alert("Translation error: " + err.message);
+  }
+});
+
+
   </script>
 </body>
 
