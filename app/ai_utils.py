@@ -260,8 +260,8 @@ def get_static_organ_image(organ: str) -> str | None:
     "thyroid": "thyroid.jpg",
     "thyroid gland": "thyroid.jpg",
 
-    "adrenal gland": "adrenal.jpg",
-    "adrenal glands": "adrenal.jpg",
+    "adrenal gland": "adrenals.jpg",
+    "adrenal glands": "adrenals.jpg",
 
     "skin": "skin.jpg",
 

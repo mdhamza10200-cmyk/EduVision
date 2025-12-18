@@ -242,3 +242,6 @@ async def identify_organ_image(file: UploadFile = File(...)):
         "image_generation_status": "ok" if static_image_path else "not_found",
     }
 
+@app.get("/")
+def root():
+    return {"status": "API running"}
