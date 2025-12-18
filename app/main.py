@@ -13,6 +13,7 @@ from .ai_utils import (
     translate_summary,
     generate_detailed_text,
     generate_references,
+    translate_references,
     identify_organ,
     get_static_organ_image,
     identify_organ_with_static_image,
@@ -163,6 +164,24 @@ async def get_refs(session_id: str):
     if not data["references"]:
         data["references"] = generate_references(data["summary"])
     return {"references": data["references"]}
+
+
+@app.get("/references/translate/{session_id}")
+async def translate_references_api(session_id: str, language: str):
+    data = SESSION_DATA.get(session_id)
+    if not data:
+        return JSONResponse(status_code=404, content={"error": "Invalid session_id"})
+
+    if not data["references"]:
+        data["references"] = generate_references(data["summary"])
+
+    translated_refs = translate_references(data["references"], language)
+
+    return {
+        "language": language,
+        "references": translated_refs
+    }
+
 
 
 @app.get("/images/{session_id}")
